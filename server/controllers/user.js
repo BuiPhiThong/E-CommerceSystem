@@ -3,6 +3,7 @@ const asyncHandler= require('express-async-handler')
 
 
 const register = asyncHandler(async(req,res)=>{
+    
     const {email,password, firstname,lastname} = req.body
 
     if(!email || !password || !firstname || !lastname){
