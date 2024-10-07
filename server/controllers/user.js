@@ -39,6 +39,7 @@ const login = asyncHandler(async(req,res)=>{
     }
 
    const response = await User.findOne({email:email})
+   // ở đây response đã trả về một đối tượng User nên có thể sử dụng là một object để sử dụng hàm isCorrectResponse
 
 
    if(response && await response.isCorrectPassword(password)){
