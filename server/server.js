@@ -9,7 +9,7 @@ app.use(cookieParser())
 
 const port = process.env.PORT || 8888;
 
-app.use(express.json());
+app.use(express.json());// đọc hiểu data json của cilent gửi lên
 app.use(express.urlencoded({ extended: true }));
 dbConnect()
 

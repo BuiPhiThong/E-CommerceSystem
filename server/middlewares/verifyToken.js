@@ -5,7 +5,7 @@ const asyncHandler = require('express-async-handler')
 const verifyAccessToken=asyncHandler(async(req,res, next)=>{
     //Bearer token
     
-    //headers : { authorization : Bearer token }
+    //access token gửi trong headers có dạng : { authorization : Bearer token }
     if(req?.headers?.authorization?.startsWith('Bearer')){
         const token = req.headers.authorization.split(' ')[1]
 
@@ -18,6 +18,8 @@ const verifyAccessToken=asyncHandler(async(req,res, next)=>{
             }
             else{
                 req.user = decode
+                // console.log(decode);
+                
                 next()
             }
         })
@@ -29,8 +31,20 @@ const verifyAccessToken=asyncHandler(async(req,res, next)=>{
     }
 })
 
+const isAdmin = asyncHandler(async(req,res,next)=>{
+    const {role} = req.user
+
+    if(role!=='admin') {
+        return res.status(401).json({
+            success: false,
+            mess:'Require admin role!!!'
+        })
+    }
+    next()
+})
 
 
 module.exports ={
-    verifyAccessToken
+    verifyAccessToken,
+    isAdmin
 }
