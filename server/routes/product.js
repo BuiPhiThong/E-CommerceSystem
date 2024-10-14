@@ -1,0 +1,20 @@
+const router = require('express').Router()
+const ctrls = require('../controllers/product')
+const {verifyAccessToken, isAdmin} = require('../middlewares/verifyToken')
+
+router.post('/',[verifyAccessToken, isAdmin],ctrls.createProduct)
+router.get('/',ctrls.getProduct)
+router.get('/:pid',ctrls.getProductById)
+
+
+router.put('/:pid',[verifyAccessToken, isAdmin],ctrls.updProduct)
+router.delete('/:pid',[verifyAccessToken, isAdmin],ctrls.delProduct)
+
+
+
+
+module.exports = router
+
+//CRUD | Create - Read -Update - Delete |Post - Get - Put -Delete
+//Create +Update gửi ở body
+//Get + delete - query 
