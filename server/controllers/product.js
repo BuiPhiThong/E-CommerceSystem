@@ -1,3 +1,4 @@
+const e = require('express')
 const Product = require('../models/product')
 const asyncHandler = require('express-async-handler')
 const slugify = require('slugify')
@@ -50,16 +51,83 @@ const delProduct = asyncHandler(async(req,res)=>{
 
 })
 
-const getProduct = asyncHandler(async(req,res)=>{
+//filter , sorting & pagination
+// const getProduct = asyncHandler(async(req,res)=>{
+//     const queries = {...req.query}
 
-    const dataProducts = await Product.find()
-    return res.status(200).json({
-        status: dataProducts? true : false,
+//     //tách các tường đặc biệt ra khỏi query
+//     const excludeFiedls = ['limit','sort','page','fields']
+//     excludeFiedls.forEach(element => {
+//         return delete queries[element]
+//     });
 
-        mess: dataProducts ? dataProducts : 'Get all product failed!'
-    })
 
-})
+//     //Format lại các operator cho đúng cú pháp mongoose
+//     let queryString = JSON.stringify(queries)
+//     queryString = queryString.replace(/\b(gte|gt|lte|lt)\b/g, matchedEl => `$${matchedEl}`)
+//     const formatQueries = JSON.parse(queryString)
+
+//     //Filtering
+//     if(queries?.title) formatQueries.title = { $regex : queries.title, $options: 'i' }
+
+//     let queryCommand = Product.find(formatQueries)
+
+//     //Execute query
+//     //Số lượng sản phẩm thỏa mãn điều kiện !== Số lượng sản phẩm trả về 1 lần gọi API
+
+//     queryCommand.exec(async(err,response)=>{
+//         if(err) throw new Error(err.message)
+
+//             const counts = await Product.find(formatQueries).countDocuments()
+
+//             return res.status(200).json({
+//                 success: response ? true : false,
+//                 products: response? response : 'Can not get  products',
+//                 counts
+//             })
+//     })
+// })
+const getProduct = asyncHandler(async(req, res) => {
+    const queries = { ...req.query };
+    // Loại bỏ các trường không cần thiết khỏi query
+    const excludeFields = ['limit', 'sort', 'page', 'fields'];
+    excludeFields.forEach(element => delete queries[element]);
+
+    // Chuyển đổi các toán tử so sánh thành cú pháp MongoDB
+    let queryString = JSON.stringify(queries);
+    queryString = queryString.replace(/\b(gte|gt|lte|lt)\b/g, matchedEl => `$${matchedEl}`);
+    const formatQueries = JSON.parse(queryString);
+
+    // Lọc sản phẩm theo tiêu chí title (nếu có)
+    if (queries?.title) formatQueries.title = { $regex: queries.title, $options: 'i' };
+
+    try {
+        let sortBy='';
+        if(req.query.sort){
+            sortBy = req.query.sort.split(',').join(' ');
+        }else{
+            //mặc định sắp xếp theo createAt
+            sortBy='-createdAt'
+        }
+        // Thực hiện truy vấn MongoDB để lấy danh sách sản phẩm
+        const response = await Product.find(formatQueries).sort(sortBy);
+        
+        // Đếm tổng số sản phẩm thỏa mãn điều kiện
+        const counts = await Product.countDocuments(formatQueries);
+
+        return res.status(200).json({
+            success: response ? true : false,
+            products: response ? response : 'Can not get products',
+            counts
+        });
+    } catch (error) {
+        // Xử lý lỗi khi có vấn đề trong quá trình truy vấn
+        return res.status(500).json({
+            success: false,
+            mess: error.message || 'Internal Server Error'
+        });
+    }
+});
 
 
 const getProductById = asyncHandler(async(req,res)=>{
