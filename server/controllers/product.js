@@ -88,7 +88,7 @@ const delProduct = asyncHandler(async(req,res)=>{
 //     })
 // })
 const getProduct = asyncHandler(async(req, res) => {
-    const queries = { ...req.query };
+    const queries = { ...req.query};
     // Loại bỏ các trường không cần thiết khỏi query
     const excludeFields = ['limit', 'sort', 'page', 'fields'];
     excludeFields.forEach(element => delete queries[element]);
@@ -96,7 +96,7 @@ const getProduct = asyncHandler(async(req, res) => {
     // Chuyển đổi các toán tử so sánh thành cú pháp MongoDB
     let queryString = JSON.stringify(queries);
     queryString = queryString.replace(/\b(gte|gt|lte|lt)\b/g, matchedEl => `$${matchedEl}`);
-    const formatQueries = JSON.parse(queryString);
+    const formatQueries = JSON.parse(queryString);//chuyển chuỗi Json đã sửa thành lại object
 
     // Lọc sản phẩm theo tiêu chí title (nếu có)
     if (queries?.title) formatQueries.title = { $regex: queries.title, $options: 'i' };
@@ -106,19 +106,36 @@ const getProduct = asyncHandler(async(req, res) => {
         if(req.query.sort){
             sortBy = req.query.sort.split(',').join(' ');
         }else{
-            //mặc định sắp xếp theo createAt
-            sortBy='-createdAt'
+            //mặc định sắp xếp theo createAt    
+            sortBy='createdAt'
         }
         // Thực hiện truy vấn MongoDB để lấy danh sách sản phẩm
-        const response = await Product.find(formatQueries).sort(sortBy);
+        let queryCommand = Product.find(formatQueries).sort(sortBy);
         
+        //Fields limiting
+        if(req.query.fields){
+            const fields = req.query.fields.split(',').join(' ')
+
+            queryCommand =  Product.find(formatQueries).sort(sortBy).select(fields);
+        }
+
+        //thực hiện pagination
+        const page = parseInt(req.query.page) || 1
+        const limit = parseInt(req.query.limit) || 5
+        const skip = (page - 1) * limit
+
+        queryCommand = queryCommand.skip(skip).limit(limit);  // Áp dụng phân trang
         // Đếm tổng số sản phẩm thỏa mãn điều kiện
         const counts = await Product.countDocuments(formatQueries);
+        // trả về kết quả cuối cùng
+        const response = await queryCommand
 
         return res.status(200).json({
             success: response ? true : false,
             products: response ? response : 'Can not get products',
-            counts
+            counts,
+            totalPage:Math.ceil(counts/limit),
+            currentPage: page
         });
     } catch (error) {
         // Xử lý lỗi khi có vấn đề trong quá trình truy vấn
@@ -129,6 +146,35 @@ const getProduct = asyncHandler(async(req, res) => {
     }
 });
 
+const ratings= asyncHandler(async(req,res)=>{
+    const {_id} = req.user
+
+    const {star, comment, pid} = req.body
+
+    if(!star || !pid) throw new Error('Missing input rating products!')
+
+    const ratingProduct = await Product.findById(pid)
+    
+    const alreadyRating = ratingProduct?.ratings.find(item => item.postedBy.toString() === _id)
+    // console.log({alreadyRating})
+    if(alreadyRating){
+        //update star & comment
+        await Product.updateOne({
+            ratings: { $elemMatch : alreadyRating}
+        },{
+            $set:{"ratings.$.star": star, "ratings.$.comment": comment}
+        }, {new : true})
+    }else{
+        //chua danh giá : add star& comment
+        await Product.findByIdAndUpdate(pid,{
+            $push:{ ratings: {star, comment, postedBy:_id} }
+        }, {new :true})
+    }
+
+    return res.status(200).json({
+        status: true
+    })
+})
 
 const getProductById = asyncHandler(async(req,res)=>{
 
@@ -147,6 +193,7 @@ module.exports ={
     updProduct,
     delProduct,
     getProduct,
-    getProductById
+    getProductById,
+    ratings
 }
 
