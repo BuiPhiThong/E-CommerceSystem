@@ -171,8 +171,21 @@ const ratings= asyncHandler(async(req,res)=>{
         }, {new :true})
     }
 
+    const updatedProduct = await Product.findById(pid)
+    const countRating = updatedProduct.ratings.length
+
+    let totalRating = 0;
+    updatedProduct.ratings.forEach(rating => {
+        totalRating += rating.star;
+    });
+
+    const averageStar = Math.round(totalRating*10/ countRating) / 10 
+    updatedProduct.totalRatings= averageStar
+    await updatedProduct.save()
+
     return res.status(200).json({
-        status: true
+        status: true,
+        updatedProduct
     })
 })
 
