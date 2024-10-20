@@ -5,7 +5,8 @@ const ctrls = require('../controllers/blog')
 
 
 router.post('/',[verifyAccessToken, isAdmin],ctrls.createBlog)
-router.get('/',ctrls.getBlog)
+router.get('/',ctrls.getBlogs)
+router.get('/one/:bid',ctrls.getBlog)
 router.put('/like',[verifyAccessToken],ctrls.likeBlog)
 router.put('/dislike',[verifyAccessToken],ctrls.dislikeBlog)
 

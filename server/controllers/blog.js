@@ -39,7 +39,7 @@ const delBlog = asyncHandler(async(req,res)=>{
     })
 
 })
-const getBlog = asyncHandler(async(req,res)=>{
+const getBlogs = asyncHandler(async(req,res)=>{
     const dataBlog = await Blog.find()
 
     return res.status(200).json({
@@ -70,8 +70,8 @@ const likeBlog = asyncHandler(async(req,res)=>{
             rs: response
         })
     }
-    const alreadyLiked = blog.likes.find(item=> item.toString() === _id)
-    if(alreadyLiked){
+    const isLiked = blog.likes.find(item=> item.toString() === _id)
+    if(isLiked){
         const response = await Blog.findByIdAndUpdate(bid,{ $pull : { likes: _id } }, { new : true })
 
         return res.status(200).json({
@@ -124,13 +124,26 @@ const dislikeBlog = asyncHandler(async(req,res)=>{
             rs: response
         })
     }
+})
 
+const getBlog= asyncHandler(async(req,res)=>{
+    const { bid } = req.params
+
+    const  response = await Blog.findByIdAndUpdate(bid,{ $inc: { numberViews : 1 } } , { new : true })
+    .populate('likes','firstname lastname')
+    .populate('dislikes','firstname lastname')
+
+    return res.status(200).json({
+        status : response ? true : false,
+        rs: response
+    })
 })
 module.exports ={
     createBlog,
     updBlog,
     delBlog,
-    getBlog,
+    getBlogs,
     likeBlog,
-    dislikeBlog
+    dislikeBlog,
+    getBlog
 }

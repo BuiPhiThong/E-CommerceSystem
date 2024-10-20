@@ -171,6 +171,7 @@ const ratings= asyncHandler(async(req,res)=>{
         }, {new :true})
     }
 
+    //total rating
     const updatedProduct = await Product.findById(pid)
     const countRating = updatedProduct.ratings.length
 
