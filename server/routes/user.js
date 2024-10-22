@@ -14,11 +14,15 @@ router.get('/forgotpassword', ctrls.forgotPassword)
 router.get('/logout' ,ctrls.logout)
 router.put('/resetpassword' ,ctrls.resetPassword)
 
+router.put('/cart',verifyAccessToken,ctrls.addToCart)
+
 router.get('/' ,[verifyAccessToken,isAdmin ],ctrls.getAllUser)
 
 router.delete('/',[verifyAccessToken,isAdmin ],ctrls.delUser)
 
 router.put('/current',[verifyAccessToken],ctrls.updUser)
+
+router.put('/updaddress',[verifyAccessToken],ctrls.updAddress)
 
 router.put('/:uid',[verifyAccessToken, isAdmin],ctrls.updUserById)
 

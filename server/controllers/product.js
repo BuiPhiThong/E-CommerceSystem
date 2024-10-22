@@ -1,5 +1,7 @@
 const e = require('express')
 const Product = require('../models/product')
+const User = require('../models/user')
+
 const asyncHandler = require('express-async-handler')
 const slugify = require('slugify')
 
@@ -202,12 +204,30 @@ const getProductById = asyncHandler(async(req,res)=>{
     })
 
 })
+
+const uploadImageProduct = asyncHandler(async(req,res)=>{
+
+    const  { pid } = req.params
+    if(!req.files) throw new Error('Missing input')
+
+    const response = await Product.findByIdAndUpdate(pid,{ $push: { images: { $each: req.files.map(el=> el.path ) } } },{ new : true})    
+
+    console.log(req.file);
+    
+    return res.status(200).json({
+        status: response? true : false,
+
+        mess: response ? response : 'Update image product failed!'
+    })
+})
+
 module.exports ={
     createProduct,
     updProduct,
     delProduct,
     getProduct,
     getProductById,
-    ratings
+    ratings,
+    uploadImageProduct
 }
 

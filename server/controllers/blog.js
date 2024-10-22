@@ -138,6 +138,20 @@ const getBlog= asyncHandler(async(req,res)=>{
         rs: response
     })
 })
+
+const uploadImageProduct = asyncHandler(async(req,res)=>{
+
+    const  { bid } = req.params
+    if(!req.file) throw new Error('Missing input')
+
+    const response = await Blog.findByIdAndUpdate(bid,{ image : req.file.path  },{ new : true})    
+    
+    return res.status(200).json({
+        status: response? true : false,
+
+        mess: response ? response : 'Update image product failed!'
+    })
+})
 module.exports ={
     createBlog,
     updBlog,
@@ -145,5 +159,6 @@ module.exports ={
     getBlogs,
     likeBlog,
     dislikeBlog,
-    getBlog
+    getBlog,
+    uploadImageProduct
 }
