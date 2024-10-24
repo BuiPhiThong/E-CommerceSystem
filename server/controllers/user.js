@@ -315,7 +315,7 @@ const addToCart = asyncHandler(async (req, res) => {
       _id,
       { $push: { cart: { product: pid, quantity, color } } },
       { new: true }
-    );
+    ).select('-refreshtoken -role -password');
     return res.status(200).json({
       status: response ? true : false,
 
